@@ -1,0 +1,137 @@
+from flask import Flask, render_template_string, request, redirect
+import json
+import os
+
+app = Flask(__name__)
+
+ARCHIVO = "productos.json"
+
+if not os.path.exists(ARCHIVO):
+    with open(ARCHIVO, "w") as f:
+        json.dump([], f)
+
+HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi Tienda</title>
+</head>
+<body>
+
+<h1>TIENDA ONLINE</h1>
+
+<a href="/agregar">Agregar Producto</a>
+
+<hr>
+
+{% for p in productos %}
+<div style="border:1px solid black;padding:10px;margin:10px;">
+    <h2>{{p.nombre}}</h2>
+
+    <h3>${{p.precio}}</h3>
+
+    <p>{{p.descripcion}}</p>
+
+    {% for foto in p.fotos %}
+        <img src="{{foto}}" width="200">
+    {% endfor %}
+</div>
+{% endfor %}
+
+</body>
+</html>
+"""
+
+AGREGAR = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agregar producto</title>
+</head>
+<body>
+
+<h1>Nuevo Producto</h1>
+
+<form method="POST">
+
+Nombre:<br>
+<input type="text" name="nombre"><br><br>
+
+Precio:<br>
+<input type="text" name="precio"><br><br>
+
+Descripción:<br>
+<textarea name="descripcion"></textarea><br><br>
+
+Foto 1:<br>
+<input type="text" name="foto1"><br>
+
+Foto 2:<br>
+<input type="text" name="foto2"><br>
+
+Foto 3:<br>
+<input type="text" name="foto3"><br>
+
+Foto 4:<br>
+<input type="text" name="foto4"><br>
+
+Foto 5:<br>
+<input type="text" name="foto5"><br><br>
+
+<button type="submit">
+Guardar
+</button>
+
+</form>
+
+</body>
+</html>
+"""
+
+@app.route("/")
+def inicio():
+
+    with open(ARCHIVO, "r", encoding="utf-8") as f:
+        productos = json.load(f)
+
+    return render_template_string(
+        HTML,
+        productos=productos
+    )
+
+@app.route("/agregar", methods=["GET", "POST"])
+def agregar():
+
+    if request.method == "POST":
+
+        with open(ARCHIVO, "r", encoding="utf-8") as f:
+            productos = json.load(f)
+
+        nuevo = {
+            "nombre": request.form["nombre"],
+            "precio": request.form["precio"],
+            "descripcion": request.form["descripcion"],
+            "fotos": [
+                request.form["foto1"],
+                request.form["foto2"],
+                request.form["foto3"],
+                request.form["foto4"],
+                request.form["foto5"]
+            ]
+        }
+
+        productos.append(nuevo)
+
+        with open(ARCHIVO, "w", encoding="utf-8") as f:
+            json.dump(
+                productos,
+                f,
+                indent=4,
+                ensure_ascii=False
+            )
+
+        return redirect("/")
+
+    return render_template_string(AGREGAR)
+
+app.run(debug=True)
